@@ -14,6 +14,15 @@ export const trainingModules = {
           "Avisar a equipe que o paciente chegou",
           "Acomodar o tutor e o paciente visando seu conforto e bem estar",
           "Instruir sobre o portal Simples Vet"
+        ],
+        activities: [
+          {
+            type: "mcq",
+            question: "Qual o primeiro passo ao iniciar o dia na rotina clínica?",
+            options: ["Verificar e-mails", "Checar mensagens antigas", "Organizar a recepção"],
+            correctAnswer: "Checar mensagens antigas",
+            feedback: "Correto! É fundamental se situar dos acontecimentos do plantão anterior."
+          }
         ]
       },
       remocao: {
@@ -29,6 +38,14 @@ export const trainingModules = {
           "Receber tutores",
           "Tirar dúvidas referente a pagamento, contrato, orçamento",
           "Imprimir receitas"
+        ],
+        activities: [
+          {
+            type: "scenario",
+            scenario: "Um tutor solicita uma remoção via WhatsApp. Qual a sua próxima ação imediata após avisar a equipe?",
+            expectedAnswerKeywords: ["enviar orçamento", "texto informações adicionais"],
+            feedback: "Correto! Após avisar a equipe, o próximo passo é enviar o orçamento junto com as informações adicionais."
+          }
         ]
       },
       internacao: {
@@ -47,6 +64,17 @@ export const trainingModules = {
           "Responder no grupo da família ou sempre lembrar os veterinários que tem mensagem não respondida",
           "Marcar horário de visita",
           "Avisar a equipe que a família chegou"
+        ],
+        activities: [
+          {
+            type: "fill_in_the_blanks",
+            sentence: "Ao realizar uma internação, é essencial imprimir o [BLANK] e o [BLANK] para o tutor.",
+            blanks: [
+              { placeholder: "BLANK", correctAnswer: "contrato" },
+              { placeholder: "BLANK", correctAnswer: "termo" }
+            ],
+            feedback: "Correto! Contrato e termo são documentos essenciais na internação."
+          }
         ]
       },
       alta: {
@@ -59,6 +87,31 @@ export const trainingModules = {
           "Imprimir relatório detalhado",
           "Encaminhar ao financeiro, se disponível",
           "Dividir valores"
+        ],
+        activities: [
+          {
+            type: "ordering",
+            instruction: "Coloque as etapas da rotina de 'Alta' na ordem correta:",
+            items: [
+              "Imprimir exames (caso necessário)",
+              "Imprimir receita",
+              "Fazer uma pastinha do paciente para entregar para o tutor",
+              "Verificar com a equipe se realizaram lançamento de todos os insumos e medicamentos",
+              "Imprimir relatório detalhado",
+              "Encaminhar ao financeiro, se disponível",
+              "Dividir valores"
+            ],
+            correctOrder: [
+              "Verificar com a equipe se realizaram lançamento de todos os insumos e medicamentos",
+              "Imprimir relatório detalhado",
+              "Imprimir exames (caso necessário)",
+              "Imprimir receita",
+              "Fazer uma pastinha do paciente para entregar para o tutor",
+              "Encaminhar ao financeiro, se disponível",
+              "Dividir valores"
+            ],
+            feedback: "A ordem correta garante que todos os lançamentos sejam feitos antes da entrega de documentos e cobrança final."
+          }
         ]
       },
       exameExterno: {
@@ -71,6 +124,15 @@ export const trainingModules = {
           "Em caso de clínica não conveniada realizar a cobrança para os tutores",
           "Levar a amostra para o laboratório",
           "Realizar lançamento"
+        ],
+        activities: [
+          {
+            type: "mcq",
+            question: "Ao receber uma amostra para exame externo, qual o primeiro passo a ser realizado?",
+            options: ["Levar a amostra para o laboratório", "Realizar cadastro do paciente", "Lançar o valor da cobrança"],
+            correctAnswer: "Realizar cadastro do paciente",
+            feedback: "Correto! O cadastro do paciente é fundamental antes de qualquer outra ação."
+          }
         ]
       },
       tarefasGerais: {
@@ -89,6 +151,14 @@ export const trainingModules = {
           "Responsável pela abertura da porta para funcionários, entregadores e tutores",
           "Responsável pelo envio dos orçamentos no grupo da família",
           "Responsável por apresentar os orçamentos presencialmente"
+        ],
+        activities: [
+          {
+            type: "scenario",
+            scenario: "Você está atendendo um paciente presencialmente e o telefone toca. Qual a sua prioridade?",
+            expectedAnswerKeywords: ["atendimento presencial", "atendimento telefônico", "prioridade"],
+            feedback: "A prioridade é o atendimento presencial. O atendimento telefônico pode ser gerenciado após a conclusão do atendimento presencial ou por outro colega, se disponível."
+          }
         ]
       },
       cobrancas: {
@@ -101,6 +171,17 @@ export const trainingModules = {
           "Realizar link de pagamentos para tutores que não virão para visita presencial",
           "Realizar cobrança de valores em aberto no sistema (enviar detalhado pela manhã)",
           "Se for realizado algum erro de cobrança e ou faltar algum lançamento, se for o caso, entrar em contato com o tutor para explicar"
+        ],
+        activities: [
+          {
+            type: "fill_in_the_blanks",
+            sentence: "Após a consulta clínica, é fundamental [BLANK] com a equipe se os [BLANK] utilizados foram lançados.",
+            blanks: [
+              { placeholder: "BLANK", correctAnswer: "checar" },
+              { placeholder: "BLANK", correctAnswer: "insumos" }
+            ],
+            feedback: "Correto! Checar o lançamento dos insumos é crucial para a cobrança correta."
+          }
         ]
       }
     }

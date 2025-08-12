@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   BookOpen, 
   CheckCircle, 
@@ -185,7 +190,89 @@ function TrainingOverview() {
 
 function ModuleDetail({ moduleId }) {
   const module = trainingModules[`module${moduleId}`]
-  
+  const [currentActivityIndex, setCurrentActivityIndex] = useState(0)
+  const [showActivityModal, setShowActivityModal] = useState(false)
+  const [userAnswer, setUserAnswer] = useState("")
+  const [mcqSelectedOption, setMcqSelectedOption] = useState("")
+  const [fillInBlanksAnswers, setFillInBlanksAnswers] = useState({})
+  const [orderingItems, setOrderingItems] = useState([])
+  const [activityFeedback, setActivityFeedback] = useState(null)
+  const [activityCompleted, setActivityCompleted] = useState(false)
+
+  const currentSectionKey = module.sections ? Object.keys(module.sections)[currentActivityIndex] : null
+  const currentSection = currentSectionKey ? module.sections[currentSectionKey] : null
+  const currentActivity = currentSection && currentSection.activities && currentSection.activities.length > 0 
+    ? currentSection.activities[0] // Assuming one activity per section for now, or first one
+    : null
+
+  // Reset activity state when section changes
+  useEffect(() => {
+    if (currentActivity) {
+      setUserAnswer("")
+      setMcqSelectedOption("")
+      setFillInBlanksAnswers({})
+      setOrderingItems(currentActivity.type === "ordering" ? [...currentActivity.items] : [])
+      setActivityFeedback(null)
+      setActivityCompleted(false)
+    }
+  }, [currentActivity])
+
+  const handleOpenActivity = (sectionKey) => {
+    const sectionIndex = Object.keys(module.sections).indexOf(sectionKey)
+    setCurrentActivityIndex(sectionIndex)
+    setShowActivityModal(true)
+  }
+
+  const handleSubmitActivity = () => {
+    let isCorrect = false
+    let feedbackMessage = ""
+
+    if (!currentActivity) return
+
+    switch (currentActivity.type) {
+      case "mcq":
+        isCorrect = mcqSelectedOption === currentActivity.correctAnswer
+        feedbackMessage = isCorrect ? currentActivity.feedback : `Incorreto. A resposta correta é: ${currentActivity.correctAnswer}`
+        break
+      case "scenario":
+        const keywords = currentActivity.expectedAnswerKeywords.map(k => k.toLowerCase())
+        const userLower = userAnswer.toLowerCase()
+        isCorrect = keywords.every(keyword => userLower.includes(keyword))
+        feedbackMessage = isCorrect ? currentActivity.feedback : `Sua resposta pode ser melhorada. Dica: ${currentActivity.feedback}`
+        break
+      case "fill_in_the_blanks":
+        isCorrect = currentActivity.blanks.every(blank => 
+          fillInBlanksAnswers[blank.placeholder] && 
+          fillInBlanksAnswers[blank.placeholder].toLowerCase() === blank.correctAnswer.toLowerCase()
+        )
+        feedbackMessage = isCorrect ? currentActivity.feedback : `Incorreto. Verifique suas respostas. Dica: ${currentActivity.feedback}`
+        break
+      case "ordering":
+        isCorrect = JSON.stringify(orderingItems) === JSON.stringify(currentActivity.correctOrder)
+        feedbackMessage = isCorrect ? currentActivity.feedback : `A ordem está incorreta. Dica: ${currentActivity.feedback}`
+        break
+      default:
+        break
+    }
+
+    setActivityFeedback(feedbackMessage)
+    setActivityCompleted(isCorrect)
+
+    // Simple alert instead of toast
+    alert(`${isCorrect ? "Resposta Correta!" : "Resposta Incorreta"}\n\n${feedbackMessage}`)
+  }
+
+  const handleNextSection = () => {
+    const nextIndex = currentActivityIndex + 1
+    if (nextIndex < Object.keys(module.sections).length) {
+      setCurrentActivityIndex(nextIndex)
+      setShowActivityModal(true)
+    } else {
+      setShowActivityModal(false)
+      alert("Módulo Concluído!\n\nVocê completou todas as atividades deste módulo.")
+    }
+  }
+
   if (!module) {
     return (
       <div className="text-center py-12">
@@ -231,6 +318,14 @@ function ModuleDetail({ moduleId }) {
                     </li>
                   ))}
                 </ul>
+                {section.activities && section.activities.length > 0 && (
+                  <div className="mt-4">
+                    <Button onClick={() => handleOpenActivity(key)}>
+                      <Play className="h-4 w-4 mr-2" />
+                      Iniciar Atividade
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -241,6 +336,105 @@ function ModuleDetail({ moduleId }) {
             <p className="text-gray-700">{module.content}</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Activity Modal */}
+      {showActivityModal && currentActivity && (
+        <Dialog open={showActivityModal} onOpenChange={setShowActivityModal}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Atividade: {currentSection.title}</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              {currentActivity.type === "mcq" && (
+                <div>
+                  <p className="font-semibold mb-2">{currentActivity.question}</p>
+                  <RadioGroup onValueChange={setMcqSelectedOption} value={mcqSelectedOption}>
+                    {currentActivity.options.map((option, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <RadioGroupItem value={option} id={`option-${index}`} />
+                        <Label htmlFor={`option-${index}`}>{option}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              )}
+
+              {currentActivity.type === "scenario" && (
+                <div>
+                  <p className="font-semibold mb-2">Cenário: {currentActivity.scenario}</p>
+                  <Textarea 
+                    placeholder="Descreva sua abordagem..."
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    rows={5}
+                  />
+                </div>
+              )}
+
+              {currentActivity.type === "fill_in_the_blanks" && (
+                <div>
+                  <p className="font-semibold mb-2">{currentActivity.sentence.split("[BLANK]").map((part, index) => (
+                    <span key={index}>
+                      {part}
+                      {index < currentActivity.blanks.length && (
+                        <Input 
+                          type="text" 
+                          className="inline-block w-32 mx-1" 
+                          placeholder="Resposta"
+                          value={fillInBlanksAnswers[currentActivity.blanks[index].placeholder] || ""}
+                          onChange={(e) => setFillInBlanksAnswers({
+                            ...fillInBlanksAnswers,
+                            [currentActivity.blanks[index].placeholder]: e.target.value
+                          })}
+                        />
+                      )}
+                    </span>
+                  ))}</p>
+                </div>
+              )}
+
+              {currentActivity.type === "ordering" && (
+                <div>
+                  <p className="font-semibold mb-2">{currentActivity.instruction}</p>
+                  <div className="space-y-2">
+                    {orderingItems.map((item, index) => (
+                      <div 
+                        key={item} 
+                        className="flex items-center p-2 border rounded-md bg-gray-50 cursor-grab"
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", index.toString())}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"))
+                          const newItems = [...orderingItems]
+                          const [draggedItem] = newItems.splice(draggedIndex, 1)
+                          newItems.splice(index, 0, draggedItem)
+                          setOrderingItems(newItems)
+                        }}
+                      >
+                        {index + 1}. {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activityFeedback && (
+                <div className={`p-3 rounded-md ${activityCompleted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {activityFeedback}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              {!activityCompleted ? (
+                <Button onClick={handleSubmitActivity}>Verificar Resposta</Button>
+              ) : (
+                <Button onClick={handleNextSection}>Próxima Atividade</Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Navigation */}
